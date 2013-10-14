@@ -1,4 +1,44 @@
-(require 2htdp/image)
+#lang racket
+
+(require racket/gui/base
+         )
+
+(define band? (or/c 'red 'green 'blue 'alpha 0 1 2 3))
+
+(provide
+ (contract-out
+  [color-equal? (-> color? color? boolean?)]
+  [color-ref    (-> color? band? byte?)]
+  [draw-image   (-> image? image?)]
+  [image-cols   (-> image? exact-nonnegative-integer?)]
+  [image-rows   (-> image? exact-nonnegative-integer?)]
+  [image-equal? (-> image? image? boolean?)]
+  [image-map    (-> (-> color? color?) image? image?)]
+  [image-map-rc (-> (-> exact-nonnegative-integer? exact-nonnegative-integer? color?)
+                    image? image?)]
+  [image-ref  
+   (case->
+    (-> image? exact-nonnegative-integer? exact-nonnegative-integer? color?)
+    (-> image? exact-nonnegative-integer? exact-nonnegative-integer? band? byte?))]
+  [make-image
+   (case->
+    (-> exact-nonnegative-integer? exact-nonnegative-integer? image?)
+    (-> exact-nonnegative-integer? exact-nonnegative-integer? color? image?)
+    (-> exact-nonnegative-integer? exact-nonnegative-integer? 
+        (-> exact-nonnegative-integer? exact-nonnegative-integer? color?)
+        image?))]
+  [list->image  (-> exact-nonnegative-integer? list? image?)]
+  [read-image   (->* () (path-string?) image?)]
+  [write-image  (->* (image?) (path-string?) boolean?)]
+  #|
+(read-image filepath)
+(write-image image filename)
+  |#
+  [black     color?] [darkgray  color?] [gray      color?] [lightgray color?]
+  [white     color?] [red       color?] [green     color?] [blue      color?]
+  [yellow    color?] [cyan      color?] [magenta   color?] [orange    color?]
+  [pink      color?]
+  ))
 
 #|
 
@@ -10,6 +50,7 @@ Functions:
 (make-color r g b)
 (color? obj)
 (image? obj)
+(scale num img)
 (color-equal? color1 color2)
 (color-ref color band)
 (draw-image image)
@@ -28,7 +69,7 @@ Functions:
 (write-image image filename)
 
 --------------------------------------------------------------------------------
-Built in:
+Built in from 2htdp/image:
 --------------------------------------------------------------------------------
 
 (color r g b alpha)
@@ -57,6 +98,14 @@ Test if obj is a color.
 => #t or #f
 
 Test if obj is a image
+
+--------------------------------------------------------------------------------
+
+(scale num img)
+=> image
+
+Returns an image that is img scaled by a factor of num.  (scale 2 img) is twice
+as large as image, 0.5 is half as large.
 
 --------------------------------------------------------------------------------
 Added by C211 Image Library:
@@ -149,7 +198,7 @@ Return how many columns are in the image.
 (image-equal? image image)
 => #t or #f
 
-Tests if two images are equal.
+Tests if two images are equal.  Additionally you can use equal?
 
 |#
 
@@ -235,12 +284,14 @@ and return that given band from the pixel as an integer in the range [0, 255].
 
 |#
 
-(define (image-ref img r c . band)
-  (if (null? band)
-      (list-ref (image->color-list img) (+ (* r (image-cols img)) c))
-      (color-ref
-       (list-ref (image->color-list img) (+ (* r (image-cols img)) c))
-       (car band))))
+(define image-ref
+  (case-lambda
+    [(image row col)
+     (list-ref (image->color-list image) (+ (* row (image-cols image)) col))]
+    [(image row col band)
+     (color-ref
+      (list-ref (image->color-list image) (+ (* row (image-cols image)) col))
+       (car band))]))
 
 #|
 
@@ -262,17 +313,14 @@ If generator is specified, it should be a function of the form
 
 |#
 
-(define (make-image rows cols . other)
-  (let ((c (if (or (null? other) (not (color? (car other))))
-               (make-color 0 0 0)
-               (car other))))
-    (let ((img (color-list->bitmap
-                (make-list (* rows cols) c)
-                cols
-                rows)))
-      (if (or (null? other) (not (procedure? (car other))))
-          img
-          (image-map-rc (car other) img)))))
+(define make-image
+  (case-lambda
+    [(rows cols)
+     (color-list->bitmap (make-list (* rows cols) (color 0 0 0)))]
+    [(rows cols color/f)
+     (if (color? color/f)
+         (color-list->bitmap (make-list (* rows cols) color/f))
+         (image-map-rc color/f (make-image rows cols)))]))
 
 #|
 
@@ -300,7 +348,14 @@ Additionally, copied images may be posted directly into racket.
 
 |#
 
-(define read-image bitmap/file)
+(define read-image
+  (case-lambda
+    [()
+     (cond
+       [(get-file "read-image" #f #f #f #f null file-formats)
+        => (λ (filename) (read-image filename))])]
+    [(filename) (bitmap/file filename)]))
+    
 
 #|
 
@@ -314,6 +369,28 @@ Writes and image to the filename path.  Returns boolean of success of save.
 |#
 
 (define write-image save-image)
+
+#|
+
+--------------------------------------------------------------------------------
+
+Color definitions
+
+|#
+
+(define black     (color 0 0 0))
+(define darkgray  (color 84 84 84))
+(define gray      (color 192 192 192))
+(define lightgray (color 205 205 205))
+(define white     (color 255 255 255))
+(define red       (color 255 0 0))
+(define green     (color 0 255 0))
+(define blue      (color 0 0 255))
+(define yellow    (color 255 255 0))
+(define cyan      (color 0 255 255))
+(define magenta   (color 255 0 255))
+(define orange    (color 255 127 0))
+(define pink      (color 188 143 143))
 
 #|
 
