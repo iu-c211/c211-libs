@@ -1,7 +1,6 @@
 #lang racket
 
-(require racket/gui/base
-         )
+(require 2htdp/image)
 
 (define band? (or/c 'red 'green 'blue 'alpha 0 1 2 3))
 
@@ -28,12 +27,7 @@
         (-> exact-nonnegative-integer? exact-nonnegative-integer? color?)
         image?))]
   [list->image  (-> exact-nonnegative-integer? list? image?)]
-  [read-image   (->* () (path-string?) image?)]
-  [write-image  (->* (image?) (path-string?) boolean?)]
-  #|
-(read-image filepath)
-(write-image image filename)
-  |#
+
   [black     color?] [darkgray  color?] [gray      color?] [lightgray color?]
   [white     color?] [red       color?] [green     color?] [blue      color?]
   [yellow    color?] [cyan      color?] [magenta   color?] [orange    color?]
@@ -348,13 +342,7 @@ Additionally, copied images may be posted directly into racket.
 
 |#
 
-(define read-image
-  (case-lambda
-    [()
-     (cond
-       [(get-file "read-image" #f #f #f #f null file-formats)
-        => (λ (filename) (read-image filename))])]
-    [(filename) (bitmap/file filename)]))
+(define read-image bitmap/file)
     
 
 #|
