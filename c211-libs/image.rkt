@@ -5,6 +5,7 @@
 (define band? (or/c 'red 'green 'blue 'alpha 0 1 2 3))
 
 (provide
+ (all-from-out 2htdp/image)
  (contract-out
   [color-equal? (-> color? color? boolean?)]
   [color-ref    (-> color? band? byte?)]
@@ -258,8 +259,8 @@ Create a new image of the same size as image by mapping a procedure of the form
     (image-cols i)
     0
     0)
-   (image-rows i)
-   (image-cols i)))
+   (image-cols i)
+   (image-rows i)))
 
 #|
 
@@ -310,10 +311,12 @@ If generator is specified, it should be a function of the form
 (define make-image
   (case-lambda
     [(rows cols)
-     (color-list->bitmap (make-list (* rows cols) (color 0 0 0)))]
+     (color-list->bitmap (make-list (* rows cols) (color 0 0 0))
+                         cols rows)]
     [(rows cols color/f)
      (if (color? color/f)
-         (color-list->bitmap (make-list (* rows cols) color/f))
+         (color-list->bitmap (make-list (* rows cols) color/f)
+                             cols rows)
          (image-map-rc color/f (make-image rows cols)))]))
 
 #|
