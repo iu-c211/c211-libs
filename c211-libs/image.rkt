@@ -6,6 +6,8 @@
 
 (provide
  (all-from-out 2htdp/image)
+ read-image
+ write-image 
  (contract-out
   [color-equal? (-> color? color? boolean?)]
   [color-ref    (-> color? band? byte?)]
