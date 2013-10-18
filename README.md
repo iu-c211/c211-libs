@@ -1,9 +1,10 @@
 c211-lib
 ========
 
-A collection of libraries designed for the C211 course at IU
+A collection of libraries designed for the C211 course at IU.
 
 C211 Image Library for Racket
+-----------------------------
 
 Functions:
 
