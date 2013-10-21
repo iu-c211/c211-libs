@@ -4,6 +4,13 @@
 
 (define band? (or/c 'red 'green 'blue 'alpha 0 1 2 3))
 
+#|
+
+(read-image filepath)
+(write-image image filename)
+
+|#
+
 (provide
  (all-from-out 2htdp/image)
  read-image
