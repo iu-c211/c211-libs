@@ -62,7 +62,12 @@
   (void))
 
 (define (print-matrix matrix) ; TODO
-  (void))
+  (let loop ((i 0) (j 0))
+    (cond
+      [(= i (matrix-rows matrix)) (void)]
+      [(= j (matrix-cols matrix)) (newline) (loop (add1 i) 0)]
+      [else (printf "~a " (matrix-ref matrix i j))
+            (loop i (add1 j))])))
 
 (define print-matrix-cols (make-parameter 5))
 
