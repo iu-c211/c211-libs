@@ -1,5 +1,6 @@
 #lang racket
 (require racket/draw)
+(provide (all-defined-out))
 
 (define-struct color (bs) #:mutable
   #:constructor-name color-bytes
@@ -108,7 +109,7 @@
     (bytes-copy!
      b2
      i
-     (func (color-bytes (subbytes b i (+ i 4))))
+     (color-bs (func (color-bytes (subbytes b i (+ i 4)))))
      0
      4))
   (define iout (make-object bitmap% h w))
@@ -123,7 +124,7 @@
            i
            (send i get-bitmap)))
      (define b (make-bytes 4))
-     (send bm get-argb-pixels r c 1 1 b)
+     (send bm get-argb-pixels c r 1 1 b)
      (color-bytes (subbytes b 0 4))]
     [(i r c band)
      (define bm
@@ -131,7 +132,7 @@
            i
            (send i get-bitmap)))
      (define b (make-bytes 4))
-     (send bm get-argb-pixels r c 1 1 b)
+     (send bm get-argb-pixels c r 1 1 b)
      (bytes-ref b (case band
                     [(0 red) 1]
                     [(1 green) 2]
@@ -144,8 +145,8 @@
      (define blk (bytes 255 0 0 0))
      (for ((i (in-range 0 (* 4 r c) 4)))
        (bytes-copy! b i blk 0 4))
-     (define bm (make-object bitmap% r c))
-     (send bm set-argb-pixels 0 0 r c b)
+     (define bm (make-object bitmap% c r))
+     (send bm set-argb-pixels 0 0 c r b)
      bm]
     [(r c f/color)
      (cond
@@ -156,16 +157,18 @@
             (bytes-copy!
              b
              (+ (* 4 (* rr c)) (* 4 rc))
-             (color-bytes (f/color rr rc))
-             )))
-        (define bm (make-object bitmap% r c))
-        (send bm set-argb-pixels 0 0 r c b)
+             (color-bs (f/color rr rc))
+             0
+             4)))
+        (define bm (make-object bitmap% c r))
+        (send bm set-argb-pixels 0 0 c r b)
         bm]
        [else (define b (make-bytes (* 4 r c)))
+             (define clr (color-bs f/color))
              (for ((i (in-range 0 (* 4 r c) 4)))
-               (bytes-copy! b i (color-bytes f/color) 0 4))
-             (define bm (make-object bitmap% r c))
-             (send bm set-argb-pixels 0 0 r c b)
+               (bytes-copy! b i clr 0 4))
+             (define bm (make-object bitmap% c r))
+             (send bm set-argb-pixels 0 0 c r b)
              bm])]))
 
 (define (list->image c ls)
@@ -177,8 +180,8 @@
   (send bm set-argb-pixels 0 0 r c b)
   bm)
 
-(define read-image (print "do read-image"))
-(define write-image (print "do write-image"))
+(define read-image (display "do read-image\n"))
+(define write-image (display "do write-image\n"))
 
 (define black     (color 0 0 0))
 (define darkgray  (color 84 84 84))
