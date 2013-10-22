@@ -60,10 +60,3 @@
                #:color (if (empty-tree? right) "white" "black"))]
      [else
      (colorize (rectangle 12 12) "white")]))
-
-(define tr
- (tree 8
-       (tree 6 (leaf 7) (leaf 5))
-       (tree 3 
-             (empty-tree)
-             (tree 0 (leaf 9) (empty-tree)))))
