@@ -1,5 +1,5 @@
 #lang racket
-(require racket/draw)
+(require racket/gui)
 (provide (all-defined-out))
 
 (define-struct color (bs) #:mutable
@@ -34,10 +34,9 @@
 
 (define (draw-image i) i)
 
-;not safe, image-snip%? isn't loaded 
 (define (image? i)
   (or ((is-a?/c bitmap%) i)
-      ((is-a?/c bitmap%) (send i get-bitmap))))
+      ((is-a?/c image-snip%) i)))
 
 (define image-set!
   (case-lambda
