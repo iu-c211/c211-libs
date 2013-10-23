@@ -59,6 +59,7 @@
   (equal? matrix1 matrix2))
 
 (define (draw-matrix matrix) ; TODO
+  (error 'draw-matrix "FinishMe - this function is not complete yet.  It is not needed for current assignments.")
   (void))
 
 (define (print-matrix matrix) ; TODO
