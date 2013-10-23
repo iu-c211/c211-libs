@@ -25,6 +25,13 @@
        (= (color-ref c1 1) (color-ref c2 1))
        (= (color-ref c1 2) (color-ref c2 2))))
 
+(define (print-color c)
+  (display "#<color: ")
+  (for ((c (subbytes (color-bs c) 1 4)))
+    (display c) (display " "))
+  (display ">\n")
+  c)
+
 (define (draw-image i) i)
 
 ;not safe, image-snip%? isn't loaded 
@@ -70,8 +77,8 @@
   (define w (send bm1 get-width))
   (define bm1bytes (make-bytes (* 4 h w)))
   (define bm2bytes (make-bytes (* 4 h w)))
-  (send bm1 get-argb-pixels 0 0 h w bm1bytes)
-  (send bm2 get-argb-pixels 0 0 h w bm2bytes)
+  (send bm1 get-argb-pixels 0 0 w h bm1bytes)
+  (send bm2 get-argb-pixels 0 0 w h bm2bytes)
   (define flag #t)
   (for ((i (in-range 0 (* 4 h w) 4)))
     #:break (and
@@ -104,7 +111,7 @@
   (define w (send bm get-width))
   (define b (make-bytes (* 4 h w)))
   (define b2 (make-bytes (* 4 h w)))
-  (send bm get-argb-pixels 0 0 h w b)
+  (send bm get-argb-pixels 0 0 w h b)
   (for ((i (in-range 0 (* 4 h w) 4)))
     (bytes-copy!
      b2
@@ -112,8 +119,8 @@
      (color-bs (func (color-bytes (subbytes b i (+ i 4)))))
      0
      4))
-  (define iout (make-object bitmap% h w))
-  (send iout set-argb-pixels 0 0 h w b2)
+  (define iout (make-object bitmap% w h))
+  (send iout set-argb-pixels 0 0 w h b2)
   iout)
 
 (define image-ref
@@ -175,13 +182,27 @@
   (define r (quotient (length ls) c))
   (define b (make-bytes (* 4 r c)))
   (for ((clr ls)(i (in-range 0 (* 4 r c) 4)))
-    (bytes-copy! b i (color-bytes clr) 0 4))
-  (define bm (make-object bitmap% r c))
-  (send bm set-argb-pixels 0 0 r c b)
+    (bytes-copy! b i (color-bs clr) 0 4))
+  (define bm (make-object bitmap% c r))
+  (send bm set-argb-pixels 0 0 c r b)
   bm)
 
-(define read-image (display "do read-image\n"))
-(define write-image (display "do write-image\n"))
+(define (image->list img)
+  (define bm
+       (if ((is-a?/c bitmap%) img)
+           img
+           (send img get-bitmap)))
+  (define h (image-rows bm))
+  (define w (image-cols bm))
+  (define bs (make-bytes (* 4 h w)))
+  (send bm get-argb-pixels 0 0 w h bs)
+  (for/list ((i (in-range 0 (* 4 w h) 4)))
+    (color (bytes-ref bs (+ i 1))
+           (bytes-ref bs (+ i 2))
+           (bytes-ref bs (+ i 3)))))
+
+(define read-image 1)
+(define write-image 1)
 
 (define black     (color 0 0 0))
 (define darkgray  (color 84 84 84))
