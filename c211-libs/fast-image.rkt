@@ -1,5 +1,5 @@
 #lang racket
-(require racket/gui)
+(require racket/gui/base)
 (provide (all-defined-out))
 
 (define-struct color (bs) #:mutable
@@ -200,8 +200,44 @@
            (bytes-ref bs (+ i 2))
            (bytes-ref bs (+ i 3)))))
 
-(define read-image 1)
-(define write-image 1)
+(define file-formats
+  '(("Any image format" "*.png;*.jpg;*.jpeg;*.bmp;*.gif")
+    ("Portable network graphics" "*.png")
+    ("JPEG" "*.jpg;*.jpeg")
+    ("Bitmap" "*.bmp")
+    ("Graphics interchange format" "*.gif")
+    ("Any" "*.*")))
+
+(define read-image
+  (case-lambda
+    [()
+     (cond
+       [(get-file "read-image" #f #f #f #f null file-formats)
+        => (λ (filename) (read-image filename))])]
+    [(filename)
+     (read-bitmap filename)]))
+
+(define write-image
+  (case-lambda
+    [(img)
+     (cond
+       [(get-file "write-image" #f #f #f #f null file-formats)
+        => (λ (filename) (write-image img filename))])]
+    [(img filename)
+     (define bm
+       (if ((is-a?/c bitmap%) img)
+           img
+           (send img get-bitmap)))
+     (define kind 
+       (case (string->symbol (string-downcase (last (string-split filename "."))))
+         [(png)      'png]
+         [(jpg jpeg) 'jpeg]
+         [(xbm)      'xbm]
+         [(xpm)      'xpm]
+         [(bmp)      'bmp]
+         [else
+          (error 'write-image "Cannot write file format, support formats: *.png, *.jpeg, *.xbm, *.xpm, *.bmp")]))
+     (send bm save-file filename kind)]))
 
 (define black     (color 0 0 0))
 (define darkgray  (color 84 84 84))
