@@ -294,7 +294,7 @@ and return that given band from the pixel as an integer in the range [0, 255].
     [(image row col band)
      (color-ref
       (list-ref (image->color-list image) (+ (* row (image-cols image)) col))
-       (car band))]))
+       band)]))
 
 #|
 
