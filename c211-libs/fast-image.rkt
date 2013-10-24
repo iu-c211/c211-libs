@@ -1,6 +1,46 @@
 #lang racket
 (require racket/gui/base)
-(provide (all-defined-out))
+
+(define band? (or/c 'red 'green 'blue 0 1 2))
+
+(provide 
+ color-bytes
+ (contract-out
+  [color        (-> byte? byte? byte? color?)]
+  [color-equal? (-> color? color? boolean?)]
+  [color-ref    (-> color? band? byte?)]
+  [color-set!   (-> color? band? byte? void?)]
+  [print-color  (-> color? color?)]
+  [draw-image   (-> image? image?)]
+  [image-cols   (-> image? exact-nonnegative-integer?)]
+  [image-rows   (-> image? exact-nonnegative-integer?)]
+  [image-equal? (-> image? image? boolean?)]
+  [image?       (-> any/c boolean?)]
+  [image-map    (-> (-> color? color?) image? image?)]
+  [read-image   (->* () (path-string?) image?)]
+  [write-image  (->* (image?) (path-string?) image?)]
+  [image-ref  
+   (case->
+    (-> image? exact-nonnegative-integer? exact-nonnegative-integer? color?)
+    (-> image? exact-nonnegative-integer? exact-nonnegative-integer? band? byte?))]
+  [image-set!
+   (case->
+    (-> image? exact-nonnegative-integer? exact-nonnegative-integer? color? void)
+    (-> image? exact-nonnegative-integer? exact-nonnegative-integer? band? byte? void))]
+  [make-image
+   (case->
+    (-> exact-nonnegative-integer? exact-nonnegative-integer? image?)
+    (-> exact-nonnegative-integer? exact-nonnegative-integer?
+        (or/c color? (-> exact-nonnegative-integer? exact-nonnegative-integer? color?))
+        image?))]
+  [list->image  (-> exact-nonnegative-integer? list? image?)]
+  [image->list  (-> image? list?)]
+
+  [black     color?] [darkgray  color?] [gray      color?] [lightgray color?]
+  [white     color?] [red       color?] [green     color?] [blue      color?]
+  [yellow    color?] [cyan      color?] [magenta   color?] [orange    color?]
+  [pink      color?]
+  ))
 
 (define-struct color (bs) #:mutable
   #:constructor-name color-bytes
