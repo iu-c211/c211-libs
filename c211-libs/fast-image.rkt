@@ -18,7 +18,7 @@
   [image?       (-> any/c boolean?)]
   [image-map    (-> (-> color? color?) image? image?)]
   [read-image   (->* () (path-string?) image?)]
-  [write-image  (->* (image?) (path-string?) image?)]
+  [write-image  (->* (image?) (path-string?) (or/c image? boolean?))]
   [image-ref  
    (case->
     (-> image? exact-nonnegative-integer? exact-nonnegative-integer? color?)
