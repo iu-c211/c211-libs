@@ -1,5 +1,6 @@
 #lang racket
 
+(require (only-in racket/gui/base get-file))
 (require 2htdp/image)
 
 (define band? (or/c 'red 'green 'blue 'alpha 0 1 2 3))
@@ -353,8 +354,22 @@ Additionally, copied images may be posted directly into racket.
 
 |#
 
-(define read-image bitmap/file)
-    
+(define read-image
+  (case-lambda
+    [()
+     (cond
+       [(get-file "read-image" #f #f #f #f null file-formats)
+        => (lambda (filename) (read-image filename))])]
+    [(filename) (bitmap/file filename)]))
+
+(define file-formats
+  '(("Any image format" "*.png;*.jpg;*.jpeg;*.bmp;*.gif")
+    ("Portable network graphics" "*.png")
+    ("JPEG" "*.jpg;*.jpeg")
+    ("Bitmap" "*.bmp")
+    ("Graphics interchange format" "*.gif")
+    ("Any" "*.*")))
+
 
 #|
 
