@@ -2,7 +2,7 @@
 
 (provide
  (contract-out
-  [draw-tree      (tree/c . -> . void?)]
+  [draw-tree      (tree/c . -> . pict?)]
   [empty-tree     (-> tree/c)]
   [empty-tree?    (any/c . -> . boolean?)]
   [leaf           (any/c . -> . tree/c)]
