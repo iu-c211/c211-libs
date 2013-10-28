@@ -11,7 +11,7 @@
   [left-subtree?  (tree/c . -> . boolean?)]
   [right-subtree  (tree/c . -> . tree/c)]
   [right-subtree? (tree/c . -> . boolean?)]
-  [root-value     (tree/c . -> . any/c)]
+  [root-value     (tree? . -> . any/c)]
   [tree           (any/c tree/c tree/c . -> . tree/c)]
   [tree?          (any/c . -> . boolean?)]))
 
