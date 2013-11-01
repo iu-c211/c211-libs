@@ -44,7 +44,16 @@
 
 (define-struct color (bs) #:mutable
   #:constructor-name color-bytes
-  #:omit-define-syntaxes)
+  #:omit-define-syntaxes
+  #:methods gen:custom-write
+          [(define (write-proc color port mode)
+             (define bs (color-bs color))
+             (fprintf
+              port
+              "#<color:~a ~a ~a>"
+              (number->string (bytes-ref bs 1))
+              (number->string (bytes-ref bs 2))
+              (number->string (bytes-ref bs 3))))])
 
 (define (color r g b) (color-bytes (bytes 255 r g b)))
 
