@@ -11,7 +11,7 @@
   [color-ref    (-> color? band? byte?)]
   [color-set!   (-> color? band? byte? void?)]
   [print-color  (-> color? color?)]
-  [draw-image   (-> image? image?)]
+  [draw-image   (-> image? void?)]
   [image-cols   (-> image? exact-nonnegative-integer?)]
   [image-rows   (-> image? exact-nonnegative-integer?)]
   [image-equal? (-> image? image? boolean?)]
@@ -81,7 +81,7 @@
   (display ">\n")
   c)
 
-(define (draw-image i) i)
+(define (draw-image i) (print i)(display "\n"))
 
 (define (image? i)
   (or ((is-a?/c bitmap%) i)
