@@ -8,6 +8,7 @@
  (contract-out
   [color        (-> byte? byte? byte? color?)]
   [color-equal? (-> color? color? boolean?)]
+  [color?       (-> any/c boolean?)]
   [color-ref    (-> color? band? byte?)]
   [color-set!   (-> color? band? byte? void?)]
   [print-color  (-> color? color?)]
@@ -46,11 +47,11 @@
   #:constructor-name color-bytes
   #:omit-define-syntaxes
   #:methods gen:custom-write
-          [(define (write-proc color port mode)
+         [(define (write-proc color port mode)
              (define bs (color-bs color))
              (fprintf
               port
-              "#<color:~a ~a ~a>"
+              "<color:~a ~a ~a>"
               (number->string (bytes-ref bs 1))
               (number->string (bytes-ref bs 2))
               (number->string (bytes-ref bs 3))))])
