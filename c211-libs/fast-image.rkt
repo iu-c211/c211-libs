@@ -8,10 +8,11 @@
  (contract-out
   [color        (-> byte? byte? byte? color?)]
   [color-equal? (-> color? color? boolean?)]
+  [color?       (-> any/c boolean?)]
   [color-ref    (-> color? band? byte?)]
   [color-set!   (-> color? band? byte? void?)]
   [print-color  (-> color? color?)]
-  [draw-image   (-> image? image?)]
+  [draw-image   (-> image? void?)]
   [image-cols   (-> image? exact-nonnegative-integer?)]
   [image-rows   (-> image? exact-nonnegative-integer?)]
   [image-equal? (-> image? image? boolean?)]
@@ -44,7 +45,16 @@
 
 (define-struct color (bs) #:mutable
   #:constructor-name color-bytes
-  #:omit-define-syntaxes)
+  #:omit-define-syntaxes
+  #:methods gen:custom-write
+         [(define (write-proc color port mode)
+             (define bs (color-bs color))
+             (fprintf
+              port
+              "<color:~a ~a ~a>"
+              (number->string (bytes-ref bs 1))
+              (number->string (bytes-ref bs 2))
+              (number->string (bytes-ref bs 3))))])
 
 (define (color r g b) (color-bytes (bytes 255 r g b)))
 
@@ -72,7 +82,7 @@
   (display ">\n")
   c)
 
-(define (draw-image i) i)
+(define (draw-image i) (print i)(display "\n"))
 
 (define (image? i)
   (or ((is-a?/c bitmap%) i)
