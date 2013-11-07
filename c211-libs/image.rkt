@@ -37,6 +37,7 @@
         (or/c color? (-> exact-nonnegative-integer? exact-nonnegative-integer? color?))
         image?))]
   [list->image  (-> exact-nonnegative-integer? list? image?)]
+  [image->list  (-> image? list?)]
 
   [black     color?] [darkgray  color?] [gray      color?] [lightgray color?]
   [white     color?] [red       color?] [green     color?] [blue      color?]
@@ -341,6 +342,17 @@ Create a new image of width cols from a list of colors
 
 (define (list->image width ls)
   (color-list->bitmap ls width (/ (length ls) width)))
+
+(define image->list
+  (lambda (image)
+    (let loop ([r (sub1 (image-rows image))] [acc '()])
+      (if (negative? r)
+          acc
+          (loop (- r 1)
+            (let loop ([c (sub1 (image-cols image))] [acc acc])
+              (if (negative? c)
+                  acc
+                  (loop (- c 1) (cons (image-ref image r c) acc)))))))))
 
 #|
 
