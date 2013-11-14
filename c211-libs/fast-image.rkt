@@ -1,10 +1,60 @@
 #lang racket
-(require racket/draw)
-(provide (all-defined-out))
+(require racket/gui/base)
+
+(define band? (or/c 'red 'green 'blue 0 1 2))
+
+(provide 
+ color-bytes
+ (contract-out
+  [color        (-> byte? byte? byte? color?)]
+  [color-equal? (-> color? color? boolean?)]
+  [color?       (-> any/c boolean?)]
+  [color-ref    (-> color? band? byte?)]
+  [color-set!   (-> color? band? byte? void?)]
+  [print-color  (-> color? color?)]
+  [draw-image   (-> image? void?)]
+  [image-cols   (-> image? exact-nonnegative-integer?)]
+  [image-rows   (-> image? exact-nonnegative-integer?)]
+  [image-equal? (-> image? image? boolean?)]
+  [image?       (-> any/c boolean?)]
+  [image-map    (-> (-> color? color?) image? image?)]
+  [read-image   (->* () (path-string?) image?)]
+  [write-image  (->* (image?) (path-string?) (or/c image? boolean?))]
+  [image-ref  
+   (case->
+    (-> image? exact-nonnegative-integer? exact-nonnegative-integer? color?)
+    (-> image? exact-nonnegative-integer? exact-nonnegative-integer? band? byte?))]
+  [image-set!
+   (case->
+    (-> image? exact-nonnegative-integer? exact-nonnegative-integer? color? void)
+    (-> image? exact-nonnegative-integer? exact-nonnegative-integer? band? byte? void))]
+  [make-image
+   (case->
+    (-> exact-nonnegative-integer? exact-nonnegative-integer? image?)
+    (-> exact-nonnegative-integer? exact-nonnegative-integer?
+        (or/c color? (-> exact-nonnegative-integer? exact-nonnegative-integer? color?))
+        image?))]
+  [list->image  (-> exact-nonnegative-integer? list? image?)]
+  [image->list  (-> image? list?)]
+
+  [black     color?] [darkgray  color?] [gray      color?] [lightgray color?]
+  [white     color?] [red       color?] [green     color?] [blue      color?]
+  [yellow    color?] [cyan      color?] [magenta   color?] [orange    color?]
+  [pink      color?]
+  ))
 
 (define-struct color (bs) #:mutable
   #:constructor-name color-bytes
-  #:omit-define-syntaxes)
+  #:omit-define-syntaxes
+  #:methods gen:custom-write
+         [(define (write-proc color port mode)
+             (define bs (color-bs color))
+             (fprintf
+              port
+              "<color:~a ~a ~a>"
+              (number->string (bytes-ref bs 1))
+              (number->string (bytes-ref bs 2))
+              (number->string (bytes-ref bs 3))))])
 
 (define (color r g b) (color-bytes (bytes 255 r g b)))
 
@@ -25,12 +75,18 @@
        (= (color-ref c1 1) (color-ref c2 1))
        (= (color-ref c1 2) (color-ref c2 2))))
 
-(define (draw-image i) i)
+(define (print-color c)
+  (display "#<color: ")
+  (for ((c (subbytes (color-bs c) 1 4)))
+    (display c) (display " "))
+  (display ">\n")
+  c)
 
-;not safe, image-snip%? isn't loaded 
+(define (draw-image i) (print i)(display "\n"))
+
 (define (image? i)
   (or ((is-a?/c bitmap%) i)
-      ((is-a?/c bitmap%) (send i get-bitmap))))
+      ((is-a?/c image-snip%) i)))
 
 (define image-set!
   (case-lambda
@@ -70,8 +126,8 @@
   (define w (send bm1 get-width))
   (define bm1bytes (make-bytes (* 4 h w)))
   (define bm2bytes (make-bytes (* 4 h w)))
-  (send bm1 get-argb-pixels 0 0 h w bm1bytes)
-  (send bm2 get-argb-pixels 0 0 h w bm2bytes)
+  (send bm1 get-argb-pixels 0 0 w h bm1bytes)
+  (send bm2 get-argb-pixels 0 0 w h bm2bytes)
   (define flag #t)
   (for ((i (in-range 0 (* 4 h w) 4)))
     #:break (and
@@ -104,7 +160,7 @@
   (define w (send bm get-width))
   (define b (make-bytes (* 4 h w)))
   (define b2 (make-bytes (* 4 h w)))
-  (send bm get-argb-pixels 0 0 h w b)
+  (send bm get-argb-pixels 0 0 w h b)
   (for ((i (in-range 0 (* 4 h w) 4)))
     (bytes-copy!
      b2
@@ -112,8 +168,8 @@
      (color-bs (func (color-bytes (subbytes b i (+ i 4)))))
      0
      4))
-  (define iout (make-object bitmap% h w))
-  (send iout set-argb-pixels 0 0 h w b2)
+  (define iout (make-object bitmap% w h))
+  (send iout set-argb-pixels 0 0 w h b2)
   iout)
 
 (define image-ref
@@ -175,13 +231,63 @@
   (define r (quotient (length ls) c))
   (define b (make-bytes (* 4 r c)))
   (for ((clr ls)(i (in-range 0 (* 4 r c) 4)))
-    (bytes-copy! b i (color-bytes clr) 0 4))
-  (define bm (make-object bitmap% r c))
-  (send bm set-argb-pixels 0 0 r c b)
+    (bytes-copy! b i (color-bs clr) 0 4))
+  (define bm (make-object bitmap% c r))
+  (send bm set-argb-pixels 0 0 c r b)
   bm)
 
-(define read-image (display "do read-image\n"))
-(define write-image (display "do write-image\n"))
+(define (image->list img)
+  (define bm
+       (if ((is-a?/c bitmap%) img)
+           img
+           (send img get-bitmap)))
+  (define h (image-rows bm))
+  (define w (image-cols bm))
+  (define bs (make-bytes (* 4 h w)))
+  (send bm get-argb-pixels 0 0 w h bs)
+  (for/list ((i (in-range 0 (* 4 w h) 4)))
+    (color (bytes-ref bs (+ i 1))
+           (bytes-ref bs (+ i 2))
+           (bytes-ref bs (+ i 3)))))
+
+(define file-formats
+  '(("Any image format" "*.png;*.jpg;*.jpeg;*.bmp;*.gif")
+    ("Portable network graphics" "*.png")
+    ("JPEG" "*.jpg;*.jpeg")
+    ("Bitmap" "*.bmp")
+    ("Graphics interchange format" "*.gif")
+    ("Any" "*.*")))
+
+(define read-image
+  (case-lambda
+    [()
+     (cond
+       [(get-file "read-image" #f #f #f #f null file-formats)
+        => (λ (filename) (read-image filename))])]
+    [(filename)
+     (read-bitmap filename)]))
+
+(define write-image
+  (case-lambda
+    [(img)
+     (cond
+       [(get-file "write-image" #f #f #f #f null file-formats)
+        => (λ (filename) (write-image img filename))])]
+    [(img filename)
+     (define bm
+       (if ((is-a?/c bitmap%) img)
+           img
+           (send img get-bitmap)))
+     (define kind 
+       (case (string->symbol (string-downcase (last (string-split filename "."))))
+         [(png)      'png]
+         [(jpg jpeg) 'jpeg]
+         [(xbm)      'xbm]
+         [(xpm)      'xpm]
+         [(bmp)      'bmp]
+         [else
+          (error 'write-image "Cannot write file format, support formats: *.png, *.jpeg, *.xbm, *.xpm, *.bmp")]))
+     (send bm save-file filename kind)]))
 
 (define black     (color 0 0 0))
 (define darkgray  (color 84 84 84))

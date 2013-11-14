@@ -1,5 +1,6 @@
 #lang racket
 
+(require (only-in racket/gui/base get-file))
 (require 2htdp/image)
 
 (define band? (or/c 'red 'green 'blue 'alpha 0 1 2 3))
@@ -36,6 +37,7 @@
         (or/c color? (-> exact-nonnegative-integer? exact-nonnegative-integer? color?))
         image?))]
   [list->image  (-> exact-nonnegative-integer? list? image?)]
+  [image->list  (-> image? list?)]
 
   [black     color?] [darkgray  color?] [gray      color?] [lightgray color?]
   [white     color?] [red       color?] [green     color?] [blue      color?]
@@ -294,7 +296,7 @@ and return that given band from the pixel as an integer in the range [0, 255].
     [(image row col band)
      (color-ref
       (list-ref (image->color-list image) (+ (* row (image-cols image)) col))
-       (car band))]))
+       band)]))
 
 #|
 
@@ -341,6 +343,17 @@ Create a new image of width cols from a list of colors
 (define (list->image width ls)
   (color-list->bitmap ls width (/ (length ls) width)))
 
+(define image->list
+  (lambda (image)
+    (let loop ([r (sub1 (image-rows image))] [acc '()])
+      (if (negative? r)
+          acc
+          (loop (- r 1)
+            (let loop ([c (sub1 (image-cols image))] [acc acc])
+              (if (negative? c)
+                  acc
+                  (loop (- c 1) (cons (image-ref image r c) acc)))))))))
+
 #|
 
 --------------------------------------------------------------------------------
@@ -353,8 +366,22 @@ Additionally, copied images may be posted directly into racket.
 
 |#
 
-(define read-image bitmap/file)
-    
+(define read-image
+  (case-lambda
+    [()
+     (cond
+       [(get-file "read-image" #f #f #f #f null file-formats)
+        => (lambda (filename) (read-image filename))])]
+    [(filename) (bitmap/file filename)]))
+
+(define file-formats
+  '(("Any image format" "*.png;*.jpg;*.jpeg;*.bmp;*.gif")
+    ("Portable network graphics" "*.png")
+    ("JPEG" "*.jpg;*.jpeg")
+    ("Bitmap" "*.bmp")
+    ("Graphics interchange format" "*.gif")
+    ("Any" "*.*")))
+
 
 #|
 
