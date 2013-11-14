@@ -16,11 +16,24 @@
   [tree?          (any/c . -> . boolean?)]))
 
 ; To draw trees
-(require slideshow/pict)
+(require slideshow/pict
+         slideshow/pict-convert)
 
 ; Structures for trees
-(define-struct empty-tree () #:transparent)
-(define-struct tree (value left right) #:transparent)
+(define-struct empty-tree () #:transparent
+  #:methods gen:custom-write
+  [(define (write-proc tr port mode)
+     (fprintf port "(empty-tree)"))])
+  
+(define-struct tree (value left right)
+  #:transparent
+  #:methods gen:custom-write
+  [(define (write-proc tr port mode)
+     (if (or (left-subtree? tr) (right-subtree? tr))
+         (fprintf port "(tree ~s ~s ~s)" (root-value tr) (left-subtree tr) (right-subtree tr))
+         (fprintf port "(leaf ~s)" (root-value tr))))]
+  #:property prop:pict-convertible 
+  (λ (tr) (draw-tree tr)))
 
 ; Union contract so that trees can be empty or not
 (define tree/c (or/c empty-tree? tree?))
