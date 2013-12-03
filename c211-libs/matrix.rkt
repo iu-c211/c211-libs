@@ -13,6 +13,9 @@
   [matrix-set!        (-> matrix? eni? eni? any/c void)]
   [matrix-equal?      (-> matrix? matrix? boolean?)]
   
+  [matrix->vov        (-> matrix? (vectorof vector?))]
+  [vov->matrix        (-> (vectorof vector?) matrix?)]
+    
   [draw-matrix        (-> matrix? void)]
   [print-matrix       (-> matrix? void)]
   [print-matrix-cols  (parameter/c eni?)]
@@ -34,6 +37,15 @@
    (for/vector ([r (in-range rows)])
      (for/vector ([c (in-range cols)])
        default))))
+
+(define (vov->matrix vov)  
+  (let ((lens (map vector-length (vector->list vov))))
+    (cond
+      [(null? lens) (new-matrix 0 0 #())]
+      [(apply = lens) (new-matrix (length lens) (car lens) vov)]
+      [else (error 'vov->matrix "Rows were not the same length.  Row lengths:\n~a\n" lens)])))
+
+(define matrix->vov matrix-data)
 
 (define (matrix-generator rows cols f)
   (new-matrix 
