@@ -9,7 +9,8 @@
 ;  color color-ref color? color->string string->color 
 ;  color-equal?
 
-(define-struct color (red green blue))
+(define-struct clr (red green blue))
+(define color? clr?)
 
 (define color
   (case-lambda
@@ -20,7 +21,7 @@
     (if (legal? r) 
         (if (legal? g) 
             (if (legal? b)
-                (make-color (inexact->exact r)
+                (make-clr (inexact->exact r)
                             (inexact->exact g)
                             (inexact->exact b))
                 (error 'color (format "illegal blue value: ~s" b)))
@@ -51,9 +52,9 @@
     (when (not (color? color))
         (error 'color-ref (format "~s is not a color" color)))
     (case sym
-      [(red 0) (color-red color)]
-      [(green 1) (color-green color)]
-      [(blue 2) (color-blue color)]
+      [(red 0)   (clr-red color)]
+      [(green 1) (clr-green color)]
+      [(blue 2)  (clr-blue color)]
       [else (error 'color-ref (format "unknown symbol: ~s" sym))])))
 
 (define color->hex
