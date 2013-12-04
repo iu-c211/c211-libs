@@ -9,8 +9,7 @@
 ;  color color-ref color? color->string string->color 
 ;  color-equal?
 
-(define-struct clr (red green blue))
-(define color? clr?)
+(define-struct color (red green blue))
 
 (define color
   (case-lambda
@@ -21,9 +20,9 @@
     (if (legal? r) 
         (if (legal? g) 
             (if (legal? b)
-                (make-clr (inexact->exact r)
-                          (inexact->exact g)
-                          (inexact->exact b))
+                (make-color (inexact->exact r)
+                            (inexact->exact g)
+                            (inexact->exact b))
                 (error 'color (format "illegal blue value: ~s" b)))
             (error 'color (format "illegal green value: ~s" g)))
         (error 'color (format "illegal red value: ~s" r)))]
@@ -33,32 +32,28 @@
                    (string->number (substring s 4 6) 16))
             (error 'color (format "~s is not a hexcode color" s)))]))
 
-
 (define black     (color   0   0   0))
 (define white     (color 255 255 255))
 (define red       (color 255   0   0))
 (define blue      (color   0   0 255))
 (define cyan      (color   0 255 255))
-(define gray      (color 192 192 192))
-(define darkgray  (color  84  84  84))
-(define lightgray (color 205 205 205))
+(define gray      (color 128 128 128))
+(define darkgray  (color  64  64  64))
+(define lightgray (color 192 192 192))
 (define green     (color   0 255   0))
 (define magenta   (color 255   0 255))
-(define orange    (color 255 127   0))
-(define pink      (color 188 143 143))
+(define orange    (color 255 200   0))
+(define pink      (color 255 175 175))
 (define yellow    (color 255 255   0))
 
 (define color-ref
   (lambda (color sym)
     (when (not (color? color))
-        (error 'color-ref (format "~s is not a color" color)))    
+        (error 'color-ref (format "~s is not a color" color)))
     (case sym
-      [(red) (clr-red color)]
-      [(0) (clr-red color)]
-      [(green) (clr-green color)]
-      [(1) (clr-green color)]
-      [(blue) (clr-blue color)]
-      [(2) (clr-blue color)]
+      [(red 0) (color-red color)]
+      [(green 1) (color-green color)]
+      [(blue 2) (color-blue color)]
       [else (error 'color-ref (format "unknown symbol: ~s" sym))])))
 
 (define color->hex
@@ -128,14 +123,23 @@
         img))))
 
 (define image-ref
-  (lambda (img i j)
-    (unless (image? img 0 0)
-        (error 'image-ref "first argument is not an image"))
-    (if (and (integer? i) (<= 0 i (- (image-rows img) 1)))
-        (if (and (integer? j) (<= 0 j (- (image-cols img) 1)))
-            (vector-ref (vector-ref img i) j)
-            (error 'image-ref (format "~a is an illegal index" j)))
-        (error 'image-ref (format "~a is an illegal index" i)))))
+  (let ([pick (lambda (img i j)
+                (unless (image? img 0 0)
+                    (error 'image-ref "first argument is not an image"))
+                (if (and (integer? i) (<= 0 i (- (image-rows img) 1)))
+                    (if (and (integer? j) (<= 0 j (- (image-cols img) 1)))
+                        (vector-ref (vector-ref img i) j)
+                        (error 'image-ref (format "~a is an illegal index" j)))
+                    (error 'image-ref (format "~a is an illegal index" i))))])
+                
+  (case-lambda
+   [(img i j) (pick img i j)]
+   [(img i j b) 
+    (unless (or (and (integer? b) (<= 0 b 2))
+                (member b '(red green blue)))
+      (error 'image-ref 
+             (format "~s is an unknown color band" b)))
+    (color-ref (pick img i j) b)])))
 
 (define image-set!
   (lambda (img i j x)
@@ -313,7 +317,7 @@
          (or (zero? (vector-length img))
              (vector? (vector-ref img 0)))
          (let ([rows (vector-length img)]
-               [cols (vector-length (vector-ref img 0))])
+               [cols (if (zero? (vector-length img)) 0 (vector-length (vector-ref img 0)))])           
            (let ([rmax (min rows (if (null? args) rows (car args)))]
                  [cmax (min cols (if (or (null? args) (null? (cdr args)))
                                      cols 
@@ -346,7 +350,7 @@
 (define list->image
   (lambda (num-cols ls)
     (make-image (quotient (length ls) num-cols) num-cols
-      (lambda (r c n m)
+      (lambda (r c)
         (list-ref ls (+ (* r num-cols) c))))))
 
 (define $obama$ (make-image 123 456))
