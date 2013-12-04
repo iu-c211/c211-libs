@@ -56,7 +56,7 @@
      (for/vector ([c (in-range cols)])
        (f r c)))))
 
-(define (check-bounds) (void))
+(define (check-bounds . args) (void))
 #; 
 (define (check-bounds function-name matrix row col)
   (unless (and (<= 0 row (- (matrix-rows matrix) 1))
