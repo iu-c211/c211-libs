@@ -39,10 +39,11 @@
        default))))
 
 (define (vov->matrix vov)  
-  (let ((lens (map vector-length (vector->list vov))))
+  (let ((lens (map vector-length (vector->list vov)))
+        (lenlen (length lens)))
     (cond
       [(null? lens) (new-matrix 0 0 #())]
-      [(apply = lens) (new-matrix (length lens) (car lens) vov)]
+      [(or (= lenlen 1) (apply = lens)) (new-matrix lenlen (car lens) vov)]
       [else (error 'vov->matrix "Rows were not the same length.  Row lengths:\n~a\n" lens)])))
 
 (define matrix->vov matrix-data)
