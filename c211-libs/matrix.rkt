@@ -39,8 +39,8 @@
        default))))
 
 (define (vov->matrix vov)  
-  (let ((lens (map vector-length (vector->list vov)))
-        (lenlen (length lens)))
+  (let* ((lens (map vector-length (vector->list vov)))
+         (lenlen (length lens)))
     (cond
       [(null? lens) (new-matrix 0 0 #())]
       [(or (= lenlen 1) (apply = lens)) (new-matrix lenlen (car lens) vov)]
